@@ -1,0 +1,24 @@
+{
+    "name": "discord-bot",
+    "version": "1.0.0",
+    "description": "discord bot testing",
+    "main": "index.js",
+    "scripts": {
+        "start": "node src/index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/astroknott/DiscordBot.git"
+    },
+    "author": "aaronk",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/astroknott/DiscordBot/issues"
+    },
+    "homepage": "https://github.com/astroknott/DiscordBot#readme",
+    "dependencies": {
+        "discord.js": "^12.5.1",
+        "dotenv": "^8.2.0"
+    },
+    "devDependencies": {}
+}
