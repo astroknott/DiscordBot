@@ -1,7 +1,10 @@
+const fs = require('fs');
 const Discord = require('discord.js');
 require('dotenv').config();
 const client = new Discord.Client();
-const axios = require('axios');
+client.commands = new Discord.Collection();
+const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.js'));
+
 
 const aaron_guildID = '813151139120807966';
 const aaron_botChannelID = '813167139979526154';
@@ -11,51 +14,36 @@ const botChannelID = `797992304068919326`;
 
 const prefix = "!";
 
-const spellsAPI = axios.create({
-  baseURL: "https://www.dnd5eapi.co/api/spells/",
-  timeout: 1000,
-});
-
 client.once('ready', () => {
   console.log('Ready!');
 });
 
 client.login(process.env.BOT_TOKEN);
 
+for (const file of commandFiles) {
+  const command = require(`./commands/${file}`);
+  // set a new item in the Collection
+  // with the key as the command name and the value as the exported module
+  client.commands.set(command.name, command);
+}
+
 client.on('message', async msg => {
-  if (msg.channel.id == botChannelID && msg.guild.id == guildID) {
-    if (!msg.content.startsWith(prefix) || msg.author.bot) return;
+  // if it doesn't start with prefix, or if it's from a bot, or if its th wrong guild, stop.
+  if (!msg.content.startsWith(prefix) || msg.author.bot || msg.guild.id != guildID) return;
 
-    const args = msg.content.slice(prefix.length).trim().split(' ');
-    const command = args.shift().toLowerCase();
+  // separate the args from the command
+  const args = msg.content.slice(prefix.length).trim().split(' ');
+  const command = args.shift().toLowerCase();
 
-    const commandlets = command.split('-');
-    const command_main = commandlets[0];
-    const command_mod = commandlets.length >= 1 ? commandlets[1] : 0;
-    let arg = args.join("-").toLowerCase();
+  // check if the command exists
+  if (!client.commands.has(command)) return;
 
-    spellsAPI.get(arg)
-      .then(function(response) {
-        if (command_main === "spell") {
-          spellCommand(command_mod, response);
-        }
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
-
-    function spellCommand(mod, res) {
-      let data = res.data;
-
-      if (mod) {
-        if (mod === "q") {
-          let components = data.components.join("");
-          msg.channel.send(data.name + " " + data.school.name + " " + data.casting_time + " " + data.range + " " + data.duration + " " + components)
-        }
-      } else {
-        msg.channel.send(data.name + ": " + data.desc)
-      }
-    }
+  // execute the command
+  try {
+    client.commands.get(command).execute(msg, args);
+  } catch (error) {
+    console.error(error);
+    message.reply('there was an error trying to execute that command!');
   }
 })
 
