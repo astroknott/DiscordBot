@@ -4,21 +4,13 @@ require('dotenv').config();
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
 const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.js'));
-
-
-const aaron_guildID = '813151139120807966';
-const aaron_botChannelID = '813167139979526154';
-
-const guildID = '691117221048746025';
-const botChannelID = `797992304068919326`;
-
-const prefix = "!";
+const { BOT_TOKEN, AARON_GUILDID, GUILDID, PREFIX } = process.env;
 
 client.once('ready', () => {
   console.log('Ready!');
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(BOT_TOKEN);
 
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
@@ -29,18 +21,29 @@ for (const file of commandFiles) {
 
 client.on('message', async msg => {
   // if it doesn't start with prefix, or if it's from a bot, or if its th wrong guild, stop.
-  if (!msg.content.startsWith(prefix) || msg.author.bot || msg.guild.id != guildID) return;
+  if (!msg.content.startsWith(PREFIX) || msg.author.bot || (msg.guild.id != GUILDID && msg.guild.id != AARON_GUILDID)) return;
 
   // separate the args from the command
-  const args = msg.content.slice(prefix.length).trim().split(' ');
-  const command = args.shift().toLowerCase();
+  const args = msg.content.slice(PREFIX.length).trim().split(' ');
+  const commandName = args.shift().toLowerCase();
 
   // check if the command exists
-  if (!client.commands.has(command)) return;
+  if (!client.commands.has(commandName)) return;
+
+  const command = client.commands.get(commandName);
+
+  if (command.args && !args.length) {
+    let reply = `You didn't provide any arguments, ${msg.author}`;
+
+    if (command.usage) {
+      reply += `\nThe proper usage would be: \`${PREFIX}${command.name} ${command.usage}\``;
+    }
+    return msg.channel.send(reply);
+  }
 
   // execute the command
   try {
-    client.commands.get(command).execute(msg, args);
+    command.execute(msg, args);
   } catch (error) {
     console.error(error);
     message.reply('there was an error trying to execute that command!');
